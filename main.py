@@ -99,9 +99,9 @@ def run_conversation():
       #{"role": "user", "content": "What's the weather like in San Francisco, and Paris?"}
       #{"role": "user", "content": "Should I upgrade to a newer operating system?"}
       #{"role": "user", "content": "What is the name of my Linux distribution and version nickname?"}
-      #{"role": "user", "content": "3 CPU bound processes are already running and I want to start 7 more. Can all those processes run concurrently?"}
+      {"role": "user", "content": "3 CPU bound processes are already running on my desktop machine and I want to start 7 more. Can all those processes run concurrently?"}
       #{"role": "user", "content": "Could I run a big LLM locally on my computer?"}
-      {"role": "user", "content": "Has my computer been running more than a week?"}
+      #{"role": "user", "content": "Has my computer been running more than a week?"}
       ]
     tools = [
         {
@@ -153,6 +153,7 @@ def run_conversation():
         tools=tools,
         tool_choice="auto",  # auto is default, but we'll be explicit
         #tool_choice={"type": "function", "function": {"name": "get_sys_info"}}
+        #tool_choice={"type": "function", "function": {"name": "execute_shell_command"}}
     )
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
