@@ -1,0 +1,6 @@
+# Replace with your own OpenAI API Key https://platform.openai.com/account/api-keys
+# and Portkey API key https://app.portkey.ai/
+# and rename this file to constants.py.
+
+OPENAI_KEY="<your OpenAI API key>"
+PORTKEY_KEY="<your Portkey API key>"
