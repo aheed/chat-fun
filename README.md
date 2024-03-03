@@ -16,3 +16,7 @@ Modify `constants.py.default` to use your own [OpenAI API key](https://platform.
 ```shell
 python main.py
 ```
+### ⚠️
+Pay attention to the **"Go ahead?"** questions if this assistant wants to run shell commands on your computer!
+
+

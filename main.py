@@ -18,13 +18,20 @@ client = OpenAI(
 )
 
 def execute_shell_command(cmd:str) -> str:
+    print("Assistant wants to run this command: ", cmd)
+    print("\nGo ahead? (y/[n])")
+    sure = input()
+    assert(sure == "y")
+        
     try:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode == 0:
-            return result.stdout.strip()  # Return the output of the command
+            output = {"output": result.stdout.strip()}
+            return json.dumps(output)
         else:
-            return f"Error executing command: {command}"
+            return f"Error executing command: {cmd}"
     except Exception as e:
+        assert(False)
         return f"An error occurred: {e}"
 
 def get_sys_info() -> str:
@@ -93,7 +100,8 @@ def run_conversation():
       #{"role": "user", "content": "Should I upgrade to a newer operating system?"}
       #{"role": "user", "content": "What is the name of my Linux distribution and version nickname?"}
       #{"role": "user", "content": "3 CPU bound processes are already running and I want to start 7 more. Can all those processes run concurrently?"}
-      {"role": "user", "content": "Could I run a big LLM locally on my computer?"}
+      #{"role": "user", "content": "Could I run a big LLM locally on my computer?"}
+      {"role": "user", "content": "Has my computer been running more than a week?"}
       ]
     tools = [
         {
@@ -114,13 +122,30 @@ def run_conversation():
                 },
             },
         },
+        #{
+        #    "type": "function",
+        #    "function": {
+        #        "name": "get_sys_info",
+        #        "description": "Get information about my computer"
+        #    },
+        #},
         {
             "type": "function",
             "function": {
-                "name": "get_sys_info",
-                "description": "Get information about my computer"
+                "name": "execute_shell_command",
+                "description": "Executes a bash shell command on my computer and returns the output",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "cmd": {
+                            "type": "string",
+                            "description": "The command line to run in a Linux shell",
+                        }
+                    },
+                    "required": ["cmd"],
+                },
             },
-        }
+        },
     ]
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
@@ -137,7 +162,8 @@ def run_conversation():
         # Note: the JSON response may not always be valid; be sure to handle errors
         available_functions = {
             "get_current_weather": get_current_weather,
-            "get_sys_info": get_sys_info
+            "get_sys_info": get_sys_info,
+            "execute_shell_command": execute_shell_command
         }  # only one function in this example, but you can have multiple
         messages.append(response_message)  # extend conversation with assistant's reply
         # Step 4: send the info for each function call and function response to the model
@@ -149,6 +175,10 @@ def run_conversation():
                 function_response = function_to_call(
                     location=function_args.get("location"),
                     unit=function_args.get("unit"),
+                )
+            elif function_to_call == execute_shell_command:
+                function_response = function_to_call(
+                    cmd=function_args.get("cmd")
                 )
             else:
                 function_response = function_to_call()
