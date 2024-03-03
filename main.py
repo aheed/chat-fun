@@ -99,9 +99,13 @@ def run_conversation():
       #{"role": "user", "content": "What's the weather like in San Francisco, and Paris?"}
       #{"role": "user", "content": "Should I upgrade to a newer operating system?"}
       #{"role": "user", "content": "What is the name of my Linux distribution and version nickname?"}
-      {"role": "user", "content": "3 CPU bound processes are already running on my desktop machine and I want to start 7 more. Can all those processes run concurrently?"}
+      #{"role": "user", "content": "3 CPU bound processes are already running on my desktop machine and I want to start 7 more. Can all those processes run concurrently?"}
       #{"role": "user", "content": "Could I run a big LLM locally on my computer?"}
       #{"role": "user", "content": "Has my computer been running more than a week?"}
+      #{"role": "user", "content": "Do I have enough disk space to download a big LLM?"}
+      #{"role": "user", "content": "Please download https://wordpress.org/latest.zip and put it in a subdir of my home dir named download_wprs."}
+      #{"role": "user", "content": "Please get me world news headlines (max 3) from some API using cURL."}
+      {"role": "user", "content": "Get user info from https://randomuser.me/api/ and guess the user's super power based on name."}
       ]
     tools = [
         {
