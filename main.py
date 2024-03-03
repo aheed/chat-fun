@@ -105,7 +105,8 @@ def run_conversation():
       #{"role": "user", "content": "Do I have enough disk space to download a big LLM?"}
       #{"role": "user", "content": "Please download https://wordpress.org/latest.zip and put it in a subdir of my home dir named download_wprs."}
       #{"role": "user", "content": "Please get me world news headlines (max 3) from some API using cURL."}
-      {"role": "user", "content": "Get user info from https://randomuser.me/api/ and guess the user's super power based on name."}
+      #{"role": "user", "content": "Get user info from https://randomuser.me/api/ and guess the user's super power based on name."}
+      {"role": "user", "content": "Get user info from https://randomuser.me/api/ and put the user's portrait in my home dir as some_person.jpg. Smallest pic available please."}
       ]
     tools = [
         {
