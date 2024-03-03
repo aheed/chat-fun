@@ -6,11 +6,11 @@ Inspired by [YouTube Video](https://www.youtube.com/watch?v=i-oHvHejdsc).
 
 ## Installation
 
-Install [Langchain](https://github.com/hwchase17/langchain) and other required packages.
+Install required packages.
 ```shell
 pip install openai portkey-ai
 ```
-Modify `constants.py.default` to use your own [OpenAI API key](https://platform.openai.com/account/api-keys), and to use you own [Portkey API key](https://app.portkey.ai/) rename it to `constants.py`.
+Modify `constants.py.default` to use your own [OpenAI API key](https://platform.openai.com/account/api-keys), and to use you own [Portkey API key](https://app.portkey.ai/). Rename it `constants.py`.
 
 ## Example usage
 ```shell
