@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from openai import OpenAI
 import json
 from portkey_ai import createHeaders, PORTKEY_GATEWAY_URL
@@ -7,6 +8,8 @@ from portkey_ai import createHeaders, PORTKEY_GATEWAY_URL
 import constants
 os.environ["OPENAI_API_KEY"] = constants.OPENAI_KEY
 os.environ["PORTKEY_API_KEY"] = constants.PORTKEY_KEY
+
+SYS_PREFIX = "***  "
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -18,8 +21,8 @@ client = OpenAI(
 )
 
 def execute_shell_command(cmd:str) -> str:
-    print("Assistant wants to run this command: ", cmd)
-    print("\nGo ahead? (y/[n])")
+    print(SYS_PREFIX, "Assistant wants to run this command: ", cmd, "\n")
+    print(SYS_PREFIX, "Go ahead? (y/[n])")
     sure = input()
     assert(sure == "y")
         
@@ -35,7 +38,7 @@ def execute_shell_command(cmd:str) -> str:
         return f"An error occurred: {e}"
 
 def get_sys_info() -> str:
-    print("get_sys_info")
+    print(SYS_PREFIX, "get_sys_info", file=sys.stderr)
     info = {
         "uname_output": "Linux agrippa 6.5.0-21-generic #21~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Feb  9 13:32:52 UTC 2 x86_64 x86_64 x86_64 GNU/Linux",
         "os": "Linux",
@@ -76,17 +79,17 @@ tmpfs           3,2G  164K  3,2G   1% /run/user/1000
 
 # Example dummy function hard coded to return the same weather
 # In production, this could be your backend API or an external API
-def get_current_weather(location, unit="fahrenheit"):
+def get_current_weather(location, unit="celsius"):
     """Get the current weather in a given location"""
-    print("get_current_weather")
+    print(SYS_PREFIX, "get_current_weather", file=sys.stderr)
     if "tokyo" in location.lower():
         return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
     elif "san francisco" in location.lower():
-        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit})
+        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit}) # obviously an incorrect value
     elif "paris" in location.lower():
         return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
     else:
-        return json.dumps({"location": location, "temperature": "unknown"})
+        return json.dumps({"location": location, "temperature": "-12", "unit": unit})
 
 def run_conversation():
 
@@ -106,7 +109,7 @@ def run_conversation():
       #{"role": "user", "content": "Please download https://wordpress.org/latest.zip and put it in a subdir of my home dir named download_wprs."}
       #{"role": "user", "content": "Please get me world news headlines (max 3) from some API using cURL."}
       #{"role": "user", "content": "Get user info from https://randomuser.me/api/ and guess the user's super power based on name."}
-      {"role": "user", "content": "Get user info from https://randomuser.me/api/ and put the user's portrait in my home dir as some_person.jpg. Smallest pic available please."}
+      #{"role": "user", "content": "Get user info from https://randomuser.me/api/ and put the user's portrait in my home dir as some_person.jpg. Smallest pic available please."}
       ]
     tools = [
         {
@@ -152,55 +155,72 @@ def run_conversation():
             },
         },
     ]
-    response = client.chat.completions.create(
-        model="gpt-4-turbo-preview",
-        messages=messages,
-        tools=tools,
-        tool_choice="auto",  # auto is default, but we'll be explicit
-        #tool_choice={"type": "function", "function": {"name": "get_sys_info"}}
-        #tool_choice={"type": "function", "function": {"name": "execute_shell_command"}}
-    )
-    response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls
-    # Step 2: check if the model wanted to call a function
-    if tool_calls:
-        # Step 3: call the function
-        # Note: the JSON response may not always be valid; be sure to handle errors
-        available_functions = {
-            "get_current_weather": get_current_weather,
-            "get_sys_info": get_sys_info,
-            "execute_shell_command": execute_shell_command
-        }  # only one function in this example, but you can have multiple
-        messages.append(response_message)  # extend conversation with assistant's reply
-        # Step 4: send the info for each function call and function response to the model
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
-            if function_to_call == get_current_weather:
-                function_response = function_to_call(
-                    location=function_args.get("location"),
-                    unit=function_args.get("unit"),
-                )
-            elif function_to_call == execute_shell_command:
-                function_response = function_to_call(
-                    cmd=function_args.get("cmd")
-                )
-            else:
-                function_response = function_to_call()
-            messages.append(
-                {
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "name": function_name,
-                    "content": function_response,
-                }
-            )  # extend conversation with function response
-        second_response = client.chat.completions.create(
+
+    tool_calls = None
+    query = None
+    if len(sys.argv) > 1:
+        query = sys.argv[1]
+
+    while True:
+               
+        
+        # Step 2: check if the model wanted to call a function
+        if tool_calls:
+            # Step 3: call the function
+            # Note: the JSON response may not always be valid; be sure to handle errors
+            available_functions = {
+                "get_current_weather": get_current_weather,
+                "get_sys_info": get_sys_info,
+                "execute_shell_command": execute_shell_command
+            }  # only one function in this example, but you can have multiple
+            
+            # Step 4: send the info for each function call and function response to the model
+            for tool_call in tool_calls:
+                function_name = tool_call.function.name
+                function_to_call = available_functions[function_name]
+                function_args = json.loads(tool_call.function.arguments)
+                if function_to_call == get_current_weather:
+                    function_response = function_to_call(
+                        location=function_args.get("location"),
+                        unit=function_args.get("unit"),
+                    )
+                elif function_to_call == execute_shell_command:
+                    function_response = function_to_call(
+                        cmd=function_args.get("cmd")
+                    )
+                else:
+                    function_response = function_to_call()
+                messages.append(
+                    {
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": function_response,
+                    }
+                )  # extend conversation with function response
+        else:
+            if not query:
+                print(SYS_PREFIX, "Prompt (q to quit): ")
+                query = input()
+            if query in ['quit', 'q', 'exit']:
+                sys.exit()
+            messages.append({"role": "user", "content": query})
+
+        response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=messages,
-        )  # get a new response from the model where it can see the function response
-        return second_response
-    else:
-        return response_message
-print(run_conversation())
+            tools=tools,
+            tool_choice="auto",  # auto is default, but we'll be explicit
+            #tool_choice={"type": "function", "function": {"name": "get_sys_info"}}
+            #tool_choice={"type": "function", "function": {"name": "execute_shell_command"}}
+        )
+        response_message = response.choices[0].message
+        print("\n\n")
+        if response_message.content:
+            print(response_message.content)
+        print("\n\n")
+        messages.append(response_message)  # extend conversation with assistant's reply
+        tool_calls = response_message.tool_calls
+        query = None
+
+run_conversation()
