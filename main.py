@@ -29,6 +29,7 @@ def execute_shell_command(cmd:str) -> str:
     try:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode == 0:
+            print(result)
             output = {"output": result.stdout.strip()}
             return json.dumps(output)
         else:
